@@ -8,7 +8,7 @@ const stdout = std.io.getStdOut().writer();
 
 const file = @embedFile("input.txt");
 
-pub fn parseFile(allocator: *Allocator, string: []const u8) ![][]const u8 {
+pub fn parseFile(allocator: Allocator, string: []const u8) ![][]const u8 {
     var result = ArrayList([]const u8).init(allocator);
     errdefer {
         for (result.items) |line| allocator.free(line);
@@ -24,15 +24,16 @@ pub fn parseFile(allocator: *Allocator, string: []const u8) ![][]const u8 {
 pub fn main() !void {
     var gpa = GeneralPurposeAllocator(.{}){};
     defer _ = gpa.deinit();
+    const allocator = gpa.allocator();
 
-    const lines = try parseFile(&gpa.allocator, file);
+    const lines = try parseFile(allocator, file);
     defer {
-        for (lines) |line| gpa.allocator.free(line);
-        gpa.allocator.free(lines);
+        for (lines) |line| allocator.free(line);
+        allocator.free(lines);
     }
 
-    var ones = try gpa.allocator.alloc(u32, lines[0].len);
-    defer gpa.allocator.free(ones);
+    var ones = try allocator.alloc(u32, lines[0].len);
+    defer allocator.free(ones);
 
     for (ones) |*one| {
         one.* = 0;
@@ -42,13 +43,13 @@ pub fn main() !void {
         ones[i] += 1;
     };
 
-    var gamma_binary = try gpa.allocator.alloc(u8, ones.len);
-    defer gpa.allocator.free(gamma_binary);
+    var gamma_binary = try allocator.alloc(u8, ones.len);
+    defer allocator.free(gamma_binary);
     for (ones) |one, i| gamma_binary[i] = if (one > lines.len / 2) '1' else '0';
     const gamma = try fmt.parseUnsigned(u32, gamma_binary, 2);
 
-    var epsilon_binary = try gpa.allocator.alloc(u8, ones.len);
-    defer gpa.allocator.free(epsilon_binary);
+    var epsilon_binary = try allocator.alloc(u8, ones.len);
+    defer allocator.free(epsilon_binary);
     for (ones) |one, i| epsilon_binary[i] = if (one < lines.len / 2) '1' else '0';
     const epsilon = try fmt.parseUnsigned(u32, epsilon_binary, 2);
 

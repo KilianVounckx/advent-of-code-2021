@@ -8,7 +8,7 @@ const stdout = std.io.getStdOut().writer();
 
 const file = @embedFile("input.txt");
 
-pub fn parseFile(allocator: *Allocator, string: []const u8) ![]u32 {
+pub fn parseFile(allocator: Allocator, string: []const u8) ![]u32 {
     var result = ArrayList(u32).init(allocator);
     errdefer result.deinit();
 
@@ -21,9 +21,10 @@ pub fn parseFile(allocator: *Allocator, string: []const u8) ![]u32 {
 pub fn main() !void {
     var gpa = GeneralPurposeAllocator(.{}){};
     defer _ = gpa.deinit();
+    const allocator = gpa.allocator();
 
-    const numbers = try parseFile(&gpa.allocator, file);
-    defer gpa.allocator.free(numbers);
+    const numbers = try parseFile(allocator, file);
+    defer allocator.free(numbers);
 
     var result: u32 = 0;
     for (numbers[3..]) |_, i| {

@@ -10,10 +10,10 @@ const file = @embedFile("input.txt");
 pub const HeightMap = struct {
     const Self = @This();
 
-    allocator: *Allocator,
+    allocator: Allocator,
     values: [][]const u32,
 
-    pub fn parse(allocator: *Allocator, string: []const u8) !Self {
+    pub fn parse(allocator: Allocator, string: []const u8) !Self {
         var result = ArrayList([]u32).init(allocator);
         errdefer {
             for (result.items) |row| allocator.free(row);
@@ -40,7 +40,7 @@ pub const HeightMap = struct {
         self.allocator.free(self.values);
     }
 
-    pub fn lowestPointValues(self: Self, allocator: *Allocator) ![]u32 {
+    pub fn lowestPointValues(self: Self, allocator: Allocator) ![]u32 {
         var result = ArrayList(u32).init(allocator);
         errdefer result.deinit();
 
@@ -69,8 +69,9 @@ pub const HeightMap = struct {
 pub fn main() !void {
     var gpa = GeneralPurposeAllocator(.{}){};
     defer _ = gpa.deinit();
+    const allocator = gpa.allocator();
 
-    const map = try HeightMap.parse(&gpa.allocator, file);
+    const map = try HeightMap.parse(allocator, file);
     defer map.deinit();
 
     try stdout.print("{d}\n", .{try map.lowestPointsRiskSum()});

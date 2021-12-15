@@ -35,12 +35,12 @@ pub const Paper = struct {
 
     const Self = @This();
 
-    allocator: *Allocator,
+    allocator: Allocator,
     dots: ArrayList(Coordinate),
     size_x: usize,
     size_y: usize,
 
-    pub fn parse(allocator: *Allocator, string: []const u8) !Self {
+    pub fn parse(allocator: Allocator, string: []const u8) !Self {
         var dots = ArrayList(Coordinate).init(allocator);
         errdefer dots.deinit();
 
@@ -140,10 +140,11 @@ pub const Paper = struct {
 pub fn main() !void {
     var gpa = GeneralPurposeAllocator(.{}){};
     defer _ = gpa.deinit();
+    const allocator = gpa.allocator();
 
     const index = mem.indexOf(u8, file, "\n\n").?;
 
-    var paper = try Paper.parse(&gpa.allocator, file[0..index]);
+    var paper = try Paper.parse(allocator, file[0..index]);
     defer paper.deinit();
 
     var it = mem.tokenize(u8, file[index + 2 ..], "\n");

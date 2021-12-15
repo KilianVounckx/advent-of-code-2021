@@ -12,11 +12,11 @@ const file = @embedFile("input.txt");
 pub const Map = struct {
     const Self = @This();
 
-    allocator: *Allocator,
+    allocator: Allocator,
     map: StringHashMap(ArrayList([]const u8)),
 
     pub fn parse(
-        allocator: *Allocator,
+        allocator: Allocator,
         string: []const u8,
     ) !Self {
         var result = StringHashMap(ArrayList([]const u8)).init(allocator);
@@ -82,7 +82,7 @@ pub const Map = struct {
         self.map.deinit();
     }
 
-    pub fn findPaths(self: Self, allocator: *Allocator) !u32 {
+    pub fn findPaths(self: Self, allocator: Allocator) !u32 {
         var path = ArrayList([]const u8).init(allocator);
         defer path.deinit();
 
@@ -91,7 +91,7 @@ pub const Map = struct {
 
     fn findPathsInternal(
         self: Self,
-        allocator: *Allocator,
+        allocator: Allocator,
         start: []const u8,
         end: []const u8,
         path: *ArrayList([]const u8),
@@ -114,7 +114,7 @@ pub const Map = struct {
 };
 
 pub fn nodeAllowed(
-    allocator: *Allocator,
+    allocator: Allocator,
     node: []const u8,
     path: [][]const u8,
 ) !bool {
@@ -153,11 +153,12 @@ pub fn nodeAllowed(
 pub fn main() !void {
     var gpa = GeneralPurposeAllocator(.{}){};
     defer _ = gpa.deinit();
+    const allocator = gpa.allocator();
 
-    var map = try Map.parse(&gpa.allocator, file);
+    var map = try Map.parse(allocator, file);
     defer map.deinit();
 
-    const result = try map.findPaths(&gpa.allocator);
+    const result = try map.findPaths(allocator);
 
     try stdout.print("{d}\n", .{result});
 }

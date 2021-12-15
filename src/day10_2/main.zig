@@ -8,7 +8,7 @@ const stdout = std.io.getStdOut().writer();
 
 const file = @embedFile("input.txt");
 
-pub fn findCompletion(allocator: *Allocator, line: []const u8) ![]u8 {
+pub fn findCompletion(allocator: Allocator, line: []const u8) ![]u8 {
     var stack = ArrayList(u8).init(allocator);
     errdefer stack.deinit();
 
@@ -58,14 +58,15 @@ pub fn findCompletion(allocator: *Allocator, line: []const u8) ![]u8 {
 pub fn main() !void {
     var gpa = GeneralPurposeAllocator(.{}){};
     defer _ = gpa.deinit();
+    const allocator = gpa.allocator();
 
-    var scores = ArrayList(u64).init(&gpa.allocator);
+    var scores = ArrayList(u64).init(allocator);
     defer scores.deinit();
 
     var it = mem.tokenize(u8, file, "\n");
     while (it.next()) |line| {
-        const completion = findCompletion(&gpa.allocator, line) catch continue;
-        defer gpa.allocator.free(completion);
+        const completion = findCompletion(allocator, line) catch continue;
+        defer allocator.free(completion);
 
         var score: u64 = 0;
         for (completion) |character| {

@@ -11,12 +11,12 @@ const file = @embedFile("input.txt");
 
 pub const PathSet = struct {
     pub const Node = struct {
-        allocator: *Allocator,
+        allocator: Allocator,
         value: []const u8,
         children: ArrayList(Node),
         final: bool,
 
-        pub fn init(allocator: *Allocator, value: []const u8) Node {
+        pub fn init(allocator: Allocator, value: []const u8) Node {
             return .{
                 .allocator = allocator,
                 .value = value,
@@ -63,10 +63,10 @@ pub const PathSet = struct {
 
     const Self = @This();
 
-    allocator: *Allocator,
+    allocator: Allocator,
     start: ArrayList(Node),
 
-    pub fn init(allocator: *Allocator) Self {
+    pub fn init(allocator: Allocator) Self {
         return .{
             .allocator = allocator,
             .start = ArrayList(Node).init(allocator),
@@ -114,11 +114,11 @@ pub const PathSet = struct {
 pub const Map = struct {
     const Self = @This();
 
-    allocator: *Allocator,
+    allocator: Allocator,
     map: StringHashMap(ArrayList([]const u8)),
 
     pub fn parse(
-        allocator: *Allocator,
+        allocator: Allocator,
         string: []const u8,
     ) !Self {
         var result = StringHashMap(ArrayList([]const u8)).init(allocator);
@@ -184,7 +184,7 @@ pub const Map = struct {
         self.map.deinit();
     }
 
-    pub fn findPaths(self: Self, allocator: *Allocator) !PathSet {
+    pub fn findPaths(self: Self, allocator: Allocator) !PathSet {
         var result = PathSet.init(allocator);
         errdefer result.deinit();
 
@@ -226,11 +226,12 @@ pub const Map = struct {
 pub fn main() !void {
     var gpa = GeneralPurposeAllocator(.{}){};
     defer _ = gpa.deinit();
+    const allocator = gpa.allocator();
 
-    var map = try Map.parse(&gpa.allocator, file);
+    var map = try Map.parse(allocator, file);
     defer map.deinit();
 
-    const paths = try map.findPaths(&gpa.allocator);
+    const paths = try map.findPaths(allocator);
     defer paths.deinit();
 
     const result = paths.count();

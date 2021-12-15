@@ -10,10 +10,10 @@ const file = @embedFile("input.txt");
 const Grid = struct {
     const Self = @This();
 
-    allocator: *Allocator,
+    allocator: Allocator,
     energies: [][]?u32,
 
-    pub fn parse(allocator: *Allocator, string: []const u8) !Self {
+    pub fn parse(allocator: Allocator, string: []const u8) !Self {
         var energies = ArrayList([]?u32).init(allocator);
         errdefer {
             for (energies.items) |row| allocator.free(row);
@@ -123,8 +123,9 @@ const Grid = struct {
 pub fn main() !void {
     var gpa = GeneralPurposeAllocator(.{}){};
     defer _ = gpa.deinit();
+    const allocator = gpa.allocator();
 
-    var grid = try Grid.parse(&gpa.allocator, file);
+    var grid = try Grid.parse(allocator, file);
     defer grid.deinit();
 
     var result: u32 = 0;

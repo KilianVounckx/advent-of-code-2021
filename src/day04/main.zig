@@ -9,7 +9,7 @@ const stdout = std.io.getStdOut().writer();
 
 const file = @embedFile("input.txt");
 
-pub fn parseOrder(allocator: *Allocator, line: []const u8) ![]u32 {
+pub fn parseOrder(allocator: Allocator, line: []const u8) ![]u32 {
     var result = std.ArrayList(u32).init(allocator);
     errdefer result.deinit();
 
@@ -57,7 +57,7 @@ pub const Bingo = struct {
         return self;
     }
 
-    pub fn parseMultiple(allocator: *Allocator, string: []const u8) ![]Self {
+    pub fn parseMultiple(allocator: Allocator, string: []const u8) ![]Self {
         var bingos = ArrayList(Bingo).init(allocator);
         errdefer bingos.deinit();
 
@@ -163,14 +163,15 @@ pub fn solve(order: []const u32, bingos: []Bingo) u32 {
 pub fn main() !void {
     var gpa = GeneralPurposeAllocator(.{}){};
     defer _ = gpa.deinit();
+    const allocator = gpa.allocator();
 
     var end_order_index = mem.indexOf(u8, file, "\n\n").?;
 
-    const order = try parseOrder(&gpa.allocator, file[0..end_order_index]);
-    defer gpa.allocator.free(order);
+    const order = try parseOrder(allocator, file[0..end_order_index]);
+    defer allocator.free(order);
 
-    var bingos = try Bingo.parseMultiple(&gpa.allocator, file[end_order_index + 1 ..]);
-    defer gpa.allocator.free(bingos);
+    var bingos = try Bingo.parseMultiple(allocator, file[end_order_index + 1 ..]);
+    defer allocator.free(bingos);
 
     const result = solve(order, bingos);
 

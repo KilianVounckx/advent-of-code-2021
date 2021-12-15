@@ -40,7 +40,7 @@ pub const Line = struct {
         return Self{ .p1 = p1, .p2 = p2 };
     }
 
-    pub fn points(self: Self, allocator: *Allocator) ![]Point {
+    pub fn points(self: Self, allocator: Allocator) ![]Point {
         var result = ArrayList(Point).init(allocator);
         errdefer result.deinit();
         if (self.p1.x != self.p2.x and self.p1.y != self.p2.y) return result.toOwnedSlice();
@@ -65,7 +65,7 @@ pub const Line = struct {
     }
 };
 
-pub fn parseFile(allocator: *Allocator, string: []const u8) ![]Line {
+pub fn parseFile(allocator: Allocator, string: []const u8) ![]Line {
     var lines = ArrayList(Line).init(allocator);
     errdefer lines.deinit();
 
@@ -78,16 +78,17 @@ pub fn parseFile(allocator: *Allocator, string: []const u8) ![]Line {
 pub fn main() !void {
     var gpa = GeneralPurposeAllocator(.{}){};
     defer _ = gpa.deinit();
+    const allocator = gpa.allocator();
 
-    const lines = try parseFile(&gpa.allocator, file);
-    defer gpa.allocator.free(lines);
+    const lines = try parseFile(allocator, file);
+    defer allocator.free(lines);
 
-    var counts = AutoHashMap(Point, u32).init(&gpa.allocator);
+    var counts = AutoHashMap(Point, u32).init(allocator);
     defer counts.deinit();
 
     for (lines) |line| {
-        const points = try line.points(&gpa.allocator);
-        defer gpa.allocator.free(points);
+        const points = try line.points(allocator);
+        defer allocator.free(points);
 
         for (points) |point| {
             var res = try counts.getOrPut(point);

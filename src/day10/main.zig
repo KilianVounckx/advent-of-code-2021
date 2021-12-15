@@ -7,7 +7,7 @@ const stdout = std.io.getStdOut().writer();
 
 const file = @embedFile("input.txt");
 
-pub fn findIllegalCharacter(allocator: *Allocator, line: []const u8) !?u8 {
+pub fn findIllegalCharacter(allocator: Allocator, line: []const u8) !?u8 {
     var stack = ArrayList(u8).init(allocator);
     defer stack.deinit();
 
@@ -53,12 +53,13 @@ pub fn findIllegalCharacter(allocator: *Allocator, line: []const u8) !?u8 {
 pub fn main() !void {
     var gpa = GeneralPurposeAllocator(.{}){};
     defer _ = gpa.deinit();
+    const allocator = gpa.allocator();
 
     var result: u32 = 0;
 
     var it = mem.tokenize(u8, file, "\n");
     while (it.next()) |line| {
-        if (try findIllegalCharacter(&gpa.allocator, line)) |character| switch (character) {
+        if (try findIllegalCharacter(allocator, line)) |character| switch (character) {
             ')' => result += 3,
             ']' => result += 57,
             '}' => result += 1197,

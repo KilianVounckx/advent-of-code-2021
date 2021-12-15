@@ -26,7 +26,7 @@ pub const Display = struct {
 
     segments: [7]u8,
 
-    pub fn parseDigit(self: Self, allocator: *Allocator, lit: []const u8) !u32 {
+    pub fn parseDigit(self: Self, allocator: Allocator, lit: []const u8) !u32 {
         var actual = try allocator.alloc(u8, lit.len);
         defer allocator.free(actual);
 
@@ -54,11 +54,11 @@ pub const Display = struct {
 pub const Entry = struct {
     const Self = @This();
 
-    allocator: *Allocator,
+    allocator: Allocator,
     displays: [10][]const u8,
     output: [4][]const u8,
 
-    pub fn parse(allocator: *Allocator, string: []const u8) !Self {
+    pub fn parse(allocator: Allocator, string: []const u8) !Self {
         const bar_index = mem.indexOf(u8, string, " | ") orelse return error.NoBar;
         const displays_part = string[0..bar_index];
         const output_part = string[bar_index + 3 ..];
@@ -159,7 +159,7 @@ pub const Entry = struct {
     }
 };
 
-pub fn parseFile(allocator: *Allocator, string: []const u8) ![]Entry {
+pub fn parseFile(allocator: Allocator, string: []const u8) ![]Entry {
     var result = ArrayList(Entry).init(allocator);
     errdefer {
         for (result.items) |entry| entry.deinit();
@@ -175,11 +175,12 @@ pub fn parseFile(allocator: *Allocator, string: []const u8) ![]Entry {
 pub fn main() !void {
     var gpa = GeneralPurposeAllocator(.{}){};
     defer _ = gpa.deinit();
+    const allocator = gpa.allocator();
 
-    const entries = try parseFile(&gpa.allocator, file);
+    const entries = try parseFile(allocator, file);
     defer {
         for (entries) |entry| entry.deinit();
-        gpa.allocator.free(entries);
+        allocator.free(entries);
     }
 
     var result: u32 = 0;

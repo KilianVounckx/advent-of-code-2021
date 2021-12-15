@@ -55,10 +55,10 @@ pub const HeightMap = struct {
 
     const Self = @This();
 
-    allocator: *Allocator,
+    allocator: Allocator,
     values: [][]const u32,
 
-    pub fn parse(allocator: *Allocator, string: []const u8) !Self {
+    pub fn parse(allocator: Allocator, string: []const u8) !Self {
         var result = ArrayList([]u32).init(allocator);
         errdefer {
             for (result.items) |row| allocator.free(row);
@@ -102,7 +102,7 @@ pub const HeightMap = struct {
         if (x < self.values[y].len - 1) try self.basin(so_far, x + 1, y);
     }
 
-    pub fn basins(self: Self, allocator: *Allocator) ![][]Point {
+    pub fn basins(self: Self, allocator: Allocator) ![][]Point {
         var result = ArrayList([]Point).init(allocator);
         errdefer {
             for (result.items) |basin_| allocator.free(basin_);
@@ -136,18 +136,19 @@ pub const HeightMap = struct {
 pub fn main() !void {
     var gpa = GeneralPurposeAllocator(.{}){};
     defer _ = gpa.deinit();
+    const allocator = gpa.allocator();
 
-    const map = try HeightMap.parse(&gpa.allocator, file);
+    const map = try HeightMap.parse(allocator, file);
     defer map.deinit();
 
-    const basins = try map.basins(&gpa.allocator);
+    const basins = try map.basins(allocator);
     defer {
-        for (basins) |basin| gpa.allocator.free(basin);
-        gpa.allocator.free(basins);
+        for (basins) |basin| allocator.free(basin);
+        allocator.free(basins);
     }
 
-    var sizes = try gpa.allocator.alloc(usize, basins.len);
-    defer gpa.allocator.free(sizes);
+    var sizes = try allocator.alloc(usize, basins.len);
+    defer allocator.free(sizes);
     for (basins) |basin, i| sizes[i] = basin.len;
 
     sort.sort(usize, sizes, {}, comptime sort.desc(usize));

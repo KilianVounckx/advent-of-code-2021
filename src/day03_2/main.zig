@@ -8,7 +8,7 @@ const stdout = std.io.getStdOut().writer();
 
 const file = @embedFile("input.txt");
 
-pub fn parseFile(allocator: *Allocator, string: []const u8) ![]?[]const u8 {
+pub fn parseFile(allocator: Allocator, string: []const u8) ![]?[]const u8 {
     var result = ArrayList(?[]const u8).init(allocator);
     errdefer {
         for (result.items) |maybe_line| if (maybe_line) |line| allocator.free(line);
@@ -29,7 +29,7 @@ pub fn countChars(lines: []?[]const u8, char: u8, index: usize) u32 {
     return result;
 }
 
-pub fn filterO2(allocator: *Allocator, lines: []?[]const u8, index: usize) void {
+pub fn filterO2(allocator: Allocator, lines: []?[]const u8, index: usize) void {
     const ones = countChars(lines, '1', index);
     const zeros = countChars(lines, '0', index);
 
@@ -50,7 +50,7 @@ pub fn filterO2(allocator: *Allocator, lines: []?[]const u8, index: usize) void 
     };
 }
 
-pub fn filterCo2(allocator: *Allocator, lines: []?[]const u8, index: usize) void {
+pub fn filterCo2(allocator: Allocator, lines: []?[]const u8, index: usize) void {
     const ones = countChars(lines, '1', index);
     const zeros = countChars(lines, '0', index);
 
@@ -84,7 +84,7 @@ pub fn firstNonNull(lines: []?[]const u8) ?[]const u8 {
     return null;
 }
 
-pub fn o2Rating(allocator: *Allocator) !u32 {
+pub fn o2Rating(allocator: Allocator) !u32 {
     var lines = try parseFile(allocator, file);
     defer {
         for (lines) |maybe_line| if (maybe_line) |line| allocator.free(line);
@@ -101,7 +101,7 @@ pub fn o2Rating(allocator: *Allocator) !u32 {
     }
 }
 
-pub fn co2Rating(allocator: *Allocator) !u32 {
+pub fn co2Rating(allocator: Allocator) !u32 {
     var lines = try parseFile(allocator, file);
     defer {
         for (lines) |maybe_line| if (maybe_line) |line| allocator.free(line);
@@ -121,9 +121,10 @@ pub fn co2Rating(allocator: *Allocator) !u32 {
 pub fn main() !void {
     var gpa = GeneralPurposeAllocator(.{}){};
     defer _ = gpa.deinit();
+    const allocator = gpa.allocator();
 
-    const o2_rating = try o2Rating(&gpa.allocator);
-    const co2_rating = try co2Rating(&gpa.allocator);
+    const o2_rating = try o2Rating(allocator);
+    const co2_rating = try co2Rating(allocator);
 
     const result = o2_rating * co2_rating;
 

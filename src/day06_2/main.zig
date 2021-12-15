@@ -43,7 +43,7 @@ pub const Fish = struct {
     }
 };
 
-pub fn parseFile(allocator: *Allocator, string: []const u8) !ArrayList(Fish) {
+pub fn parseFile(allocator: Allocator, string: []const u8) !ArrayList(Fish) {
     var result = ArrayList(Fish).init(allocator);
     errdefer result.deinit();
 
@@ -58,11 +58,12 @@ pub fn parseFile(allocator: *Allocator, string: []const u8) !ArrayList(Fish) {
 pub fn main() !void {
     var gpa = GeneralPurposeAllocator(.{}){};
     defer _ = gpa.deinit();
+    const allocator = gpa.allocator();
 
-    var fish = try parseFile(&gpa.allocator, file);
+    var fish = try parseFile(allocator, file);
     defer fish.deinit();
 
-    var cache = AutoHashMap(Pair, u64).init(&gpa.allocator);
+    var cache = AutoHashMap(Pair, u64).init(allocator);
     defer cache.deinit();
 
     var result: u64 = fish.items.len;

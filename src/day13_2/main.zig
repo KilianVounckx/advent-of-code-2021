@@ -91,7 +91,7 @@ pub const Paper = struct {
                         break;
                     }
                 } else {
-                    try writer.print(".", .{});
+                    try writer.print(" ", .{});
                 }
             }
         }

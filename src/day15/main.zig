@@ -6,6 +6,7 @@ const Allocator = mem.Allocator;
 const ArrayList = std.ArrayList;
 const AutoHashMap = std.AutoHashMap;
 const GeneralPurposeAllocator = std.heap.GeneralPurposeAllocator;
+const stdout = std.io.getStdOut().writer();
 
 const file = @embedFile("input.txt");
 
@@ -167,22 +168,6 @@ const Cavern = struct {
         for (path[1..]) |c| result += self.risks[c.y][c.x];
         return result;
     }
-
-    pub fn printPath(self: Self, path: []Coordinate) void {
-        for (self.risks) |row, y| {
-            for (row) |_, x| {
-                for (path) |c| {
-                    if (meta.eql(c, .{ .x = x, .y = y })) {
-                        std.debug.print("x", .{});
-                        break;
-                    }
-                } else {
-                    std.debug.print(" ", .{});
-                }
-            }
-            std.debug.print("\n", .{});
-        }
-    }
 };
 
 pub fn main() !void {
@@ -196,5 +181,5 @@ pub fn main() !void {
     const path = try cavern.findPath(allocator);
     defer allocator.free(path);
 
-    std.debug.print("{d}\n", .{cavern.riskSum(path)});
+    try stdout.print("{d}\n", .{cavern.riskSum(path)});
 }
